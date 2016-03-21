@@ -3043,7 +3043,7 @@ static int read_thread(void *arg)
             continue;
         } else {
             is->eof = 0;
-        }
+        } 
         /* check if packet is in play range specified by user, then queue, otherwise discard */
         stream_start_time = ic->streams[pkt->stream_index]->start_time;
         pkt_ts = pkt->pts == AV_NOPTS_VALUE ? pkt->dts : pkt->pts;
@@ -3053,6 +3053,7 @@ static int read_thread(void *arg)
                 (double)(start_time != AV_NOPTS_VALUE ? start_time : 0) / 1000000
                 <= ((double)duration / 1000000);
         if (pkt->stream_index == is->audio_stream && pkt_in_play_range) {
+            av_log(NULL, AV_LOG_ERROR, "AudioQueue---stream_index=%d, pts %d, dts=%d\n", pkt->stream_index,pkt->pts, pkt->dts);
             packet_queue_put(&is->audioq, pkt);
         } else if (pkt->stream_index == is->video_stream && pkt_in_play_range
                    && !(is->video_st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
@@ -3096,6 +3097,8 @@ static int read_thread(void *arg)
 static VideoState *stream_open(const char *filename, AVInputFormat *iformat)
 {
     VideoState *is;
+
+    av_log(NULL, AV_LOG_INFO, "stream_open--Armv7a\n");
 
     is = av_mallocz(sizeof(VideoState));
     if (!is)

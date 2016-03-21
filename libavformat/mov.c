@@ -4587,7 +4587,8 @@ static int mov_read_packet(AVFormatContext *s, AVPacket *pkt)
         sample->size = FFMIN(sample->size, (mov->next_root_atom - sample->pos));
     }
 
-    if (st->discard != AVDISCARD_ALL) {
+//    if (st->discard != AVDISCARD_ALL) {
+   {
         int64_t ret64 = avio_seek(sc->pb, sample->pos, SEEK_SET);
         if (ret64 != sample->pos) {
             av_log(mov->fc, AV_LOG_ERROR, "stream %d, offset 0x%"PRIx64": partial file\n",
@@ -4596,6 +4597,7 @@ static int mov_read_packet(AVFormatContext *s, AVPacket *pkt)
             return AVERROR_INVALIDDATA;
         }
         ret = av_get_packet(sc->pb, pkt, sample->size);
+        
         if (ret < 0) {
             sc->current_sample -= should_retry(sc->pb, ret);
             return ret;
@@ -4642,10 +4644,14 @@ static int mov_read_packet(AVFormatContext *s, AVPacket *pkt)
         pkt->duration = next_dts - pkt->dts;
         pkt->pts = pkt->dts;
     }
-    if (st->discard == AVDISCARD_ALL)
-        goto retry;
+    
+//    if (st->discard == AVDISCARD_ALL)
+//        goto retry;
+
     pkt->flags |= sample->flags & AVINDEX_KEYFRAME ? AV_PKT_FLAG_KEY : 0;
     pkt->pos = sample->pos;
+
+//    av_log(mov->fc, AV_LOG_ERROR, "Armv7a_av_get_packet---stream_index=%d, pts=%lld, dts=%lld\n",pkt->stream_index, pkt->pts, pkt->dts);
 
     if (mov->aax_mode)
         aax_filter(pkt->data, pkt->size, mov);
@@ -4660,13 +4666,13 @@ static int mov_seek_stream(AVFormatContext *s, AVStream *st, int64_t timestamp, 
     int i;
 
     sample = av_index_search_timestamp(st, timestamp, flags);
-    av_log(s, AV_LOG_TRACE, "stream %d, timestamp %"PRId64", sample %d\n", st->index, timestamp, sample);
+    av_log(s, AV_LOG_INFO, "stream %d, timestamp %"PRId64", sample %d\n", st->index, timestamp, sample);
     if (sample < 0 && st->nb_index_entries && timestamp < st->index_entries[0].timestamp)
         sample = 0;
     if (sample < 0) /* not sure what to do */
         return AVERROR_INVALIDDATA;
     sc->current_sample = sample;
-    av_log(s, AV_LOG_TRACE, "stream %d, found sample %d\n", st->index, sc->current_sample);
+    av_log(s, AV_LOG_INFO, "stream %d, found sample %d\n", st->index, sc->current_sample);
     /* adjust ctts index */
     if (sc->ctts_data) {
         time_sample = 0;
@@ -4698,6 +4704,9 @@ static int mov_read_seek(AVFormatContext *s, int stream_index, int64_t sample_ti
     if (sample < 0)
         return sample;
 
+    av_log(s, AV_LOG_INFO, "mov_read_seek---stream_index=%d, sample_time=%lld, flags=%lu\n", stream_index, sample_time,  flags);
+    av_log(s, AV_LOG_INFO, "mov_read_seek---sample=%d, mc->seek_individually=%d\n", sample, mc->seek_individually);
+
     if (mc->seek_individually) {
         /* adjust seek timestamp to found sample timestamp */
         int64_t seek_timestamp = st->index_entries[sample].timestamp;
@@ -4711,7 +4720,17 @@ static int mov_read_seek(AVFormatContext *s, int stream_index, int64_t sample_ti
             if (stream_index == i)
                 continue;
 
+            if((AVSEEK_FLAG_AUDIOTRACK&flags) && (st->codec->codec_type == AVMEDIA_TYPE_VIDEO)){
+                av_log(s, AV_LOG_INFO, "seek only for audio track, skip the video track(%d)", i);
+                continue;
+            }
+
             timestamp = av_rescale_q(seek_timestamp, s->streams[stream_index]->time_base, st->time_base);
+
+            av_log(s, AV_LOG_INFO, "timestamp=%lld, seek_timestamp=%lld\n", timestamp, seek_timestamp);
+            av_log(s, AV_LOG_INFO, "1---time_base.den=%d, time_base.num=%d\n", s->streams[stream_index]->time_base.den, s->streams[stream_index]->time_base.num);
+            av_log(s, AV_LOG_INFO, "2---time_base.den=%d, time_base.num=%d\n", st->time_base.den, st->time_base.num);
+
             mov_seek_stream(s, st, timestamp, flags);
         }
     } else {

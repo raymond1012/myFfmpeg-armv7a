@@ -680,6 +680,8 @@ int ff_read_packet(AVFormatContext *s, AVPacket *pkt)
         pkt->size = 0;
         av_init_packet(pkt);
         ret = s->iformat->read_packet(s, pkt);
+//        av_log(NULL, AV_LOG_ERROR, "Armv7a_ff_read_packet---1---stream_index=%d, pts=%lld, dts=%lld\n", pkt->stream_index,pkt->pts, pkt->dts);			
+
         if (ret < 0) {
             if (!pktl || ret == AVERROR(EAGAIN))
                 return ret;
@@ -731,6 +733,7 @@ int ff_read_packet(AVFormatContext *s, AVPacket *pkt)
         if (!pktl && st->request_probe <= 0)
             return ret;
 
+        av_log(NULL, AV_LOG_ERROR, "Armv7a_ff_read_packet---2---stream_index=%d, pts=%lld, dts=%lld\n", pkt->stream_index,pkt->pts, pkt->dts);			
         add_to_pktbuf(&s->internal->raw_packet_buffer, pkt,
                       &s->internal->raw_packet_buffer_end);
         s->internal->raw_packet_buffer_remaining_size -= pkt->size;
