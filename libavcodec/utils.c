@@ -2600,6 +2600,10 @@ int attribute_align_arg avcodec_decode_audio4(AVCodecContext *avctx,
         else {
             ret = avctx->codec->decode(avctx, frame, got_frame_ptr, &tmp);
             av_assert0(ret <= tmp.size);
+		if (ret < 0) {
+		    av_log(avctx, AV_LOG_ERROR, "yangweiqing---decode fail.---ret=%d\n",  ret);
+		        goto fail;
+		}
             frame->pkt_dts = avpkt->dts;
         }
         if (ret >= 0 && *got_frame_ptr) {

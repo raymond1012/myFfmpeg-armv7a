@@ -4704,7 +4704,7 @@ static int mov_read_seek(AVFormatContext *s, int stream_index, int64_t sample_ti
     if (sample < 0)
         return sample;
 
-    av_log(s, AV_LOG_INFO, "mov_read_seek---stream_index=%d, sample_time=%lld, flags=%lu\n", stream_index, sample_time,  flags);
+    av_log(s, AV_LOG_INFO, "mov_read_seek---stream_index=%d, sample_time=%lld, flags=%d\n", stream_index, sample_time,  flags);
     av_log(s, AV_LOG_INFO, "mov_read_seek---sample=%d, mc->seek_individually=%d\n", sample, mc->seek_individually);
 
     if (mc->seek_individually) {
